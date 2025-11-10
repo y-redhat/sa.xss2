@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>セキュリティテストサイト</title>
+</head>
+<body>
+    <h1>🔓 セキュリティ脆弱性テストサイト</h1>
+    <p>XSSとSQLインジェクションの学習用サイト</p>
+    
+    <div style="margin: 20px 0;">
+        <h2>テストページ</h2>
+        <ul>
+            <li><a href="/vulnerable" style="color: red; font-weight: bold;">🔓 脆弱性のあるサイト</a></li>
+            <li><a href="/secure" style="color: green; font-weight: bold;">🔒 安全なサイト</a></li>
+        </ul>
+    </div>
+    
+    <div style="background: #f0f0f0; padding: 15px; margin: 20px 0;">
+        <h3>テスト用ペイロード例</h3>
+        
+        <h4>SQLインジェクション:</h4>
+        <code>' OR '1'='1' --</code>
+        
+        <h4>XSS基本:</h4>
+        <code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code>
+        
+        <h4>XSS高度:</h4>
+        <code>&lt;img src=x onerror="alert('Hacked')"&gt;</code>
+    </div>
+    
+    <div style="color: red; font-weight: bold;">
+        ⚠ 警告: このサイトは学習目的のみです。公開サーバーで実行しないでください。
+    </div>
+</body>
+</html>
