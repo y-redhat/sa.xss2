@@ -1,0 +1,101 @@
+# sa.xss2
+# SA.XSS
+XSSをわざと付け加えたサイト
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS脆弱性のあるサイト - 練習用</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔓 脆弱性のある検索サイト</h1>
+        <p class="warning">⚠ このページには意図的にXSS脆弱性があります</p>
+        
+        <div class="search-section">
+            <h2>検索機能</h2>
+            <form method="GET">
+                <input type="text" name="query" placeholder="検索キーワード" value="">
+                <button type="submit">検索</button>
+            </form>
+            
+            <!-- 脆弱性1: innerHTMLを使用 -->
+            <div id="search-results">
+                <h3>検索結果:</h3>
+                <div id="results"></div>
+            </div>
+        </div>
+
+        <div class="user-section">
+            <h2>ユーザープロフィール</h2>
+            <form id="profile-form">
+                <input type="text" id="username" placeholder="ユーザー名">
+                <input type="text" id="bio" placeholder="自己紹介">
+                <button type="button" onclick="updateProfile()">プロフィール更新</button>
+            </form>
+            
+            <!-- 脆弱性2: ユーザー入力をそのまま表示 -->
+            <div id="profile-display"></div>
+        </div>
+
+        <div class="comment-section">
+            <h2>コメント欄</h2>
+            <form id="comment-form">
+                <textarea id="comment" placeholder="コメントを入力..."></textarea>
+                <button type="button" onclick="addComment()">コメント投稿</button>
+            </form>
+            
+            <!-- 脆弱性3: 動的に要素を追加 -->
+            <div id="comments"></div>
+        </div>
+    </div>
+
+    <script>
+        // URLパラメータから検索クエリを取得して表示（脆弱）
+        function displaySearchResults() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('query');
+            
+            if (query) {
+                // ❌ 危険: innerHTMLでそのまま表示
+                document.getElementById('results').innerHTML = 
+                    `"${query}" の検索結果: 見つかりませんでした`;
+            }
+        }
+
+        // プロフィール更新（脆弱）
+        function updateProfile() {
+            const username = document.getElementById('username').value;
+            const bio = document.getElementById('bio').value;
+            
+            // ❌ 危険: ユーザー入力をそのままinnerHTMLで表示
+            document.getElementById('profile-display').innerHTML = `
+                <h4>${username} のプロフィール</h4>
+                <p>${bio}</p>
+            `;
+        }
+
+        // コメント追加（脆弱）
+        function addComment() {
+            const comment = document.getElementById('comment').value;
+            
+            // ❌ 危険: 動的にHTMLを構築
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment';
+            commentDiv.innerHTML = `
+                <strong>匿名ユーザー:</strong>
+                <span>${comment}</span>
+                <small>${new Date().toLocaleString()}</small>
+            `;
+            
+            document.getElementById('comments').prepend(commentDiv);
+            document.getElementById('comment').value = '';
+        }
+
+        // ページ読み込み時に検索結果を表示
+        window.onload = displaySearchResults;
+    </script>
+</body>
+</html>
