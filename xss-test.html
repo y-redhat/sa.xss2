@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>XSS脆弱性デモ</title>
+    <title>XSS脆弱性デモ - 安全版</title>
 </head>
 <body>
-    <h1>XSS脆弱性テスト</h1>
+    <h1>XSS脆弱性テスト（安全版）</h1>
+    <p>ページを開いた瞬間にリダイレクトされないように修正しました</p>
     
     <!-- 脆弱な検索機能 -->
     <div>
@@ -32,7 +33,7 @@
     </div>
 
     <script>
-        // ❌ 危険: XSS脆弱性あり
+        // ❌ 危険: XSS脆弱性あり（ただし安全な範囲で）
         function vulnerableSearch() {
             const query = document.getElementById('searchInput').value;
             // 脆弱性: innerHTMLでそのまま表示
@@ -61,13 +62,18 @@
         }
     </script>
 
-    <div style="margin-top: 50px; background: yellow; padding: 10px;">
-        <h3>テスト用XSSペイロード:</h3>
+    <div style="margin-top: 50px; background: #f0f0f0; padding: 10px;">
+        <h3>テスト用XSSペイロード（安全なもの）:</h3>
         <ul>
             <li><code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code></li>
             <li><code>&lt;img src=x onerror="alert('Hacked')"&gt;</code></li>
             <li><code>&lt;button onclick="alert('Clicked')"&gt;クリック&lt;/button&gt;</code></li>
+            <li><code>&lt;div style="background:red;color:white;"&gt;HACKED&lt;/div&gt;</code></li>
         </ul>
+        
+        <p style="color: red; font-weight: bold;">
+            ⚠ 注意: ページをリダイレクトするコードは使用しないでください
+        </p>
     </div>
 </body>
 </html>
