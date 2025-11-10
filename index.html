@@ -1,101 +1,56 @@
 # sa.xss2
 # SA.XSS
-XSSをわざと付け加えたサイト
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XSS脆弱性のあるサイト - 練習用</title>
-    <link rel="stylesheet" href="style.css">
+    <title>脆弱性テストアプリ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>🔓 脆弱性のある検索サイト</h1>
-        <p class="warning">⚠ このページには意図的にXSS脆弱性があります</p>
+        <h1>🔓 脆弱性テストアプリケーション</h1>
         
-        <div class="search-section">
-            <h2>検索機能</h2>
-            <form method="GET">
-                <input type="text" name="query" placeholder="検索キーワード" value="">
-                <button type="submit">検索</button>
-            </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="menu">
+            <a href="{{ url_for('search') }}" class="btn">🔍 ユーザー検索 (XSS & SQLi)</a>
+            <a href="{{ url_for('login') }}" class="btn">🔑 ログイン (SQLi)</a>
+            <a href="{{ url_for('users') }}" class="btn">👥 ユーザー一覧 (SQLi)</a>
             
-            <!-- 脆弱性1: innerHTMLを使用 -->
-            <div id="search-results">
-                <h3>検索結果:</h3>
-                <div id="results"></div>
-            </div>
+            {% if session.user %}
+                <span class="user-info">ようこそ、{{ session.user }}さん</span>
+                <a href="{{ url_for('logout') }}" class="btn logout">🚪 ログアウト</a>
+            {% endif %}
         </div>
 
-        <div class="user-section">
-            <h2>ユーザープロフィール</h2>
-            <form id="profile-form">
-                <input type="text" id="username" placeholder="ユーザー名">
-                <input type="text" id="bio" placeholder="自己紹介">
-                <button type="button" onclick="updateProfile()">プロフィール更新</button>
+        <div class="add-user">
+            <h2>ユーザー追加</h2>
+            <form action="{{ url_for('add_user') }}" method="POST">
+                <input type="text" name="username" placeholder="ユーザー名" required>
+                <input type="email" name="email" placeholder="メールアドレス" required>
+                <input type="password" name="password" placeholder="パスワード" required>
+                <button type="submit">ユーザー追加</button>
             </form>
-            
-            <!-- 脆弱性2: ユーザー入力をそのまま表示 -->
-            <div id="profile-display"></div>
         </div>
 
-        <div class="comment-section">
-            <h2>コメント欄</h2>
-            <form id="comment-form">
-                <textarea id="comment" placeholder="コメントを入力..."></textarea>
-                <button type="button" onclick="addComment()">コメント投稿</button>
-            </form>
-            
-            <!-- 脆弱性3: 動的に要素を追加 -->
-            <div id="comments"></div>
+        <div class="warning">
+            <h3>⚠ 警告</h3>
+            <p>このアプリケーションは意図的に脆弱性を含んでいます</p>
+            <ul>
+                <li>SQLインジェクション脆弱性</li>
+                <li>XSS（クロスサイトスクリプティング）脆弱性</li>
+                <li>認証バイパスの可能性</li>
+            </ul>
+            <p><strong>公開サーバーには絶対にデプロイしないでください</strong></p>
         </div>
     </div>
-
-    <script>
-        // URLパラメータから検索クエリを取得して表示（脆弱）
-        function displaySearchResults() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const query = urlParams.get('query');
-            
-            if (query) {
-                // ❌ 危険: innerHTMLでそのまま表示
-                document.getElementById('results').innerHTML = 
-                    `"${query}" の検索結果: 見つかりませんでした`;
-            }
-        }
-
-        // プロフィール更新（脆弱）
-        function updateProfile() {
-            const username = document.getElementById('username').value;
-            const bio = document.getElementById('bio').value;
-            
-            // ❌ 危険: ユーザー入力をそのままinnerHTMLで表示
-            document.getElementById('profile-display').innerHTML = `
-                <h4>${username} のプロフィール</h4>
-                <p>${bio}</p>
-            `;
-        }
-
-        // コメント追加（脆弱）
-        function addComment() {
-            const comment = document.getElementById('comment').value;
-            
-            // ❌ 危険: 動的にHTMLを構築
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment';
-            commentDiv.innerHTML = `
-                <strong>匿名ユーザー:</strong>
-                <span>${comment}</span>
-                <small>${new Date().toLocaleString()}</small>
-            `;
-            
-            document.getElementById('comments').prepend(commentDiv);
-            document.getElementById('comment').value = '';
-        }
-
-        // ページ読み込み時に検索結果を表示
-        window.onload = displaySearchResults;
-    </script>
 </body>
 </html>
