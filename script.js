@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 検索ボタンのイベントリスナー
     document.getElementById('searchButton').addEventListener('click', function() {
         const input = document.getElementById('searchInput').value;
-        // ❌ 危険なコード: innerHTMLで直接表示
+        // ❌ 終わてるポイント innerHTMLで直接表示
         document.getElementById('result').innerHTML = 
             "検索結果: " + input;
     });
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('commentButton').addEventListener('click', function() {
         const comment = document.getElementById('commentInput').value;
         const div = document.createElement('div');
-        // ❌ 危険なコード: innerHTMLで直接表示
+        // ❌ 終わてるポイント: innerHTMLで直接表示
         div.innerHTML = "コメント: " + comment;
         document.getElementById('commentArea').appendChild(div);
         document.getElementById('commentInput').value = '';
