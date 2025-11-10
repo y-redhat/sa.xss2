@@ -1,36 +1,287 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>セキュリティテストサイト</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSSデータ改ざんデモ</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .vulnerable { border: 2px solid red; padding: 15px; margin: 15px 0; background: #ffe6e6; }
+        .secure { border: 2px solid green; padding: 15px; margin: 15px 0; background: #e6ffe6; }
+        .payload { background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; }
+        button { padding: 8px 15px; margin: 5px; cursor: pointer; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+        .user-data { background: #e6f3ff; padding: 10px; margin: 10px 0; }
+        .warning { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h1>🔓 セキュリティ脆弱性テストサイト</h1>
-    <p>XSSとSQLインジェクションの学習用サイト</p>
-    
-    <div style="margin: 20px 0;">
-        <h2>テストページ</h2>
+    <h1>🔓 XSSデータ改ざんデモ</h1>
+    <p class="warning">⚠ このページには意図的にXSS脆弱性があります（クライアントサイドのみ）</p>
+
+    <!-- ユーザーデータ表示エリア -->
+    <div class="user-data">
+        <h3>📊 現在のユーザーデータ:</h3>
+        <div id="userDisplay">
+            データがありません
+        </div>
+    </div>
+
+    <!-- 脆弱な入力フォーム -->
+    <div class="vulnerable">
+        <h2>❌ 脆弱なプロフィール登録</h2>
+        <p>XSS脆弱性あり - データ改ざん可能</p>
+        
+        <input type="text" id="vulnName" placeholder="ユーザー名" value="山田太郎">
+        <textarea id="vulnBio" placeholder="自己紹介">通常のユーザーです</textarea>
+        <button onclick="saveVulnerableProfile()">プロフィール保存</button>
+        
+        <div class="payload">
+            <strong>XSSペイロード例:</strong><br>
+            ユーザー名: <code>ハッカー&lt;script&gt;stealData()&lt;/script&gt;</code><br>
+            自己紹介: <code>通常のテキスト&lt;script&gt;document.getElementById('userDisplay').innerHTML='HACKED!'&lt;/script&gt;</code>
+        </div>
+    </div>
+
+    <!-- 脆弱な検索機能 -->
+    <div class="vulnerable">
+        <h2>❌ 脆弱な検索機能</h2>
+        <input type="text" id="vulnSearch" placeholder="検索キーワード">
+        <button onclick="vulnerableSearch()">検索</button>
+        
+        <div id="searchResults" style="margin-top: 10px;"></div>
+        
+        <div class="payload">
+            <strong>XSSペイロード例:</strong><br>
+            <code>&lt;img src=x onerror="alert('XSS')"&gt;</code><br>
+            <code>&lt;script&gt;document.body.style.background='red'&lt;/script&gt;</code>
+        </div>
+    </div>
+
+    <!-- 脆弱なコメント機能 -->
+    <div class="vulnerable">
+        <h2>❌ 脆弱なコメント欄</h2>
+        <textarea id="vulnComment" placeholder="コメントを入力..."></textarea>
+        <button onclick="addVulnerableComment()">コメント投稿</button>
+        
+        <div id="comments" style="margin-top: 10px;"></div>
+        
+        <div class="payload">
+            <strong>XSSペイロード例:</strong><br>
+            <code>こんにちは！&lt;script&gt;showFakeLogin()&lt;/script&gt;</code><br>
+            <code>&lt;button onclick="deleteAllData()"&gt;クリックしてプレゼント獲得&lt;/button&gt;</code>
+        </div>
+    </div>
+
+    <!-- 安全な入力フォーム（比較用） -->
+    <div class="secure">
+        <h2>✅ 安全なプロフィール登録</h2>
+        <p>XSS対策済み</p>
+        
+        <input type="text" id="secureName" placeholder="ユーザー名" value="山田太郎">
+        <textarea id="secureBio" placeholder="自己紹介">通常のユーザーです</textarea>
+        <button onclick="saveSecureProfile()">プロフィール保存</button>
+    </div>
+
+    <!-- データ操作デモ -->
+    <div class="vulnerable">
+        <h2>🎯 XSSデータ改ざんデモ</h2>
+        <p>以下のボタンでXSS攻撃の効果を確認できます</p>
+        
+        <button onclick="demoSimpleXSS()">シンプルなXSS実行</button>
+        <button onclick="demoDataSteal()">データ窃取シミュレーション</button>
+        <button onclick="demoPageTakeover()">ページ乗っ取りシミュレーション</button>
+        <button onclick="demoFakeLogin()">偽ログインフォーム表示</button>
+        <button onclick="resetPage()">ページリセット</button>
+    </div>
+
+    <script>
+        // ユーザーデータ
+        let userData = {
+            name: "山田太郎",
+            bio: "通常のユーザーです",
+            balance: 10000,
+            isAdmin: false
+        };
+
+        // 脆弱なプロフィール保存
+        function saveVulnerableProfile() {
+            const name = document.getElementById('vulnName').value;
+            const bio = document.getElementById('vulnBio').value;
+            
+            // ❌ 危険: innerHTMLでそのまま表示
+            document.getElementById('userDisplay').innerHTML = `
+                <strong>名前:</strong> ${name}<br>
+                <strong>自己紹介:</strong> ${bio}<br>
+                <strong>残高:</strong> ¥${userData.balance.toLocaleString()}<br>
+                <strong>管理者:</strong> ${userData.isAdmin ? 'はい' : 'いいえ'}
+            `;
+            
+            userData.name = name;
+            userData.bio = bio;
+        }
+
+        // 脆弱な検索
+        function vulnerableSearch() {
+            const query = document.getElementById('vulnSearch').value;
+            
+            // ❌ 危険: ユーザー入力をそのままHTMLに挿入
+            document.getElementById('searchResults').innerHTML = `
+                <h4>「${query}」の検索結果:</h4>
+                <p>結果が見つかりました: ${query}</p>
+            `;
+        }
+
+        // 脆弱なコメント追加
+        function addVulnerableComment() {
+            const comment = document.getElementById('vulnComment').value;
+            
+            // ❌ 危険: 動的にHTMLを構築
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment';
+            commentDiv.innerHTML = `
+                <strong>匿名ユーザー:</strong>
+                <span>${comment}</span>
+                <small>${new Date().toLocaleString()}</small>
+                <hr>
+            `;
+            
+            document.getElementById('comments').appendChild(commentDiv);
+            document.getElementById('vulnComment').value = '';
+        }
+
+        // 安全なプロフィール保存
+        function saveSecureProfile() {
+            const name = document.getElementById('secureName').value;
+            const bio = document.getElementById('secureBio').value;
+            
+            // ✅ 安全: textContentを使用
+            const display = document.getElementById('userDisplay');
+            display.innerHTML = ''; // 一旦クリア
+            
+            const nameElem = document.createElement('strong');
+            nameElem.textContent = '名前: ';
+            display.appendChild(nameElem);
+            display.appendChild(document.createTextNode(name));
+            display.appendChild(document.createElement('br'));
+            
+            const bioElem = document.createElement('strong');
+            bioElem.textContent = '自己紹介: ';
+            display.appendChild(bioElem);
+            display.appendChild(document.createTextNode(bio));
+            display.appendChild(document.createElement('br'));
+            
+            const balanceElem = document.createElement('strong');
+            balanceElem.textContent = '残高: ';
+            display.appendChild(balanceElem);
+            display.appendChild(document.createTextNode('¥' + userData.balance.toLocaleString()));
+            display.appendChild(document.createElement('br'));
+            
+            const adminElem = document.createElement('strong');
+            adminElem.textContent = '管理者: ';
+            display.appendChild(adminElem);
+            display.appendChild(document.createTextNode(userData.isAdmin ? 'はい' : 'いいえ'));
+            
+            userData.name = name;
+            userData.bio = bio;
+        }
+
+        // デモ関数
+        function demoSimpleXSS() {
+            document.getElementById('vulnName').value = "ハッカー<script>alert('XSS成功!')</script>";
+            document.getElementById('vulnBio').value = "通常のテキスト";
+            saveVulnerableProfile();
+            setTimeout(() => {
+                alert('XSSが実行されました！');
+            }, 100);
+        }
+
+        function demoDataSteal() {
+            document.getElementById('vulnComment').value = "こんにちは！<script>alert('あなたの残高: ¥' + userData.balance.toLocaleString())</script>";
+            addVulnerableComment();
+        }
+
+        function demoPageTakeover() {
+            document.getElementById('vulnSearch').value = "<script>document.body.innerHTML='<h1>🔓 このサイトはハッキングされました</h1><p>すべてのデータが盗まれました</p><button onclick=\"location.reload()\">元に戻す</button>'</script>";
+            vulnerableSearch();
+        }
+
+        function demoFakeLogin() {
+            document.getElementById('vulnComment').value = "重要なお知らせ:<script>showFakeLogin()</script>";
+            addVulnerableComment();
+        }
+
+        // 偽ログインフォーム表示関数
+        function showFakeLogin() {
+            const fakeLogin = document.createElement('div');
+            fakeLogin.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            fakeLogin.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
+                    <h2 style="color: red;">⚠ セキュリティ警告</h2>
+                    <p>アカウントに異常が検出されました</p>
+                    <p>パスワードを再入力してください:</p>
+                    <input type="password" id="fakePassword" placeholder="パスワード" style="margin: 10px; padding: 8px;">
+                    <br>
+                    <button onclick="fakeLoginSubmit()" style="background: red; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                        確認
+                    </button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: gray; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                        キャンセル
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(fakeLogin);
+        }
+
+        function fakeLoginSubmit() {
+            const password = document.getElementById('fakePassword').value;
+            alert(`⚠ 偽のログインフォームです！\n入力されたパスワード: "${password}"\n実際には送信されていませんが、本物の攻撃ではこの情報が盗まれます。`);
+            document.querySelector('div[style*="position: fixed"]').remove();
+        }
+
+        function deleteAllData() {
+            userData.balance = 0;
+            userData.isAdmin = false;
+            alert('データが改ざんされました！残高が0円になりました。');
+            saveVulnerableProfile();
+        }
+
+        function stealData() {
+            const stolenData = `盗まれたデータ: 名前=${userData.name}, 残高=${userData.balance}`;
+            alert('データ窃取シミュレーション: ' + stolenData);
+        }
+
+        function resetPage() {
+            location.reload();
+        }
+
+        // 初期データ表示
+        saveSecureProfile();
+    </script>
+
+    <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7;">
+        <h3>📚 学習のポイント</h3>
         <ul>
-            <li><a href="/vulnerable" style="color: red; font-weight: bold;">🔓 脆弱性のあるサイト</a></li>
-            <li><a href="/secure" style="color: green; font-weight: bold;">🔒 安全なサイト</a></li>
+            <li><strong>XSSの危険性:</strong> ユーザー入力がそのままJavaScriptとして実行される</li>
+            <li><strong>データ改ざん:</strong> 残高や権限などのデータを変更可能</li>
+            <li><strong>フィッシング:</strong> 偽のログインフォームで情報を盗む</li>
+            <li><strong>防御方法:</strong> textContentを使う、入力をエスケープする</li>
         </ul>
-    </div>
-    
-    <div style="background: #f0f0f0; padding: 15px; margin: 20px 0;">
-        <h3>テスト用ペイロード例</h3>
-        
-        <h4>SQLインジェクション:</h4>
-        <code>' OR '1'='1' --</code>
-        
-        <h4>XSS基本:</h4>
-        <code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code>
-        
-        <h4>XSS高度:</h4>
-        <code>&lt;img src=x onerror="alert('Hacked')"&gt;</code>
-    </div>
-    
-    <div style="color: red; font-weight: bold;">
-        ⚠ 警告: このサイトは学習目的のみです。公開サーバーで実行しないでください。
+        <p class="warning">⚠ このページの内容はローカル環境でのみ実行してください</p>
     </div>
 </body>
 </html>
