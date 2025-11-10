@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザー検索</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 ユーザー検索</h1>
+        <a href="{{ url_for('index') }}">← ホームに戻る</a>
+        
+        <form method="POST">
+            <input type="text" name="query" value="{{ query }}" placeholder="ユーザー名またはプロフィールで検索" required>
+            <button type="submit">検索</button>
+        </form>
+        
+        {% if query %}
+            <h2>検索結果: "{{ query }}"</h2>
+            
+            {% if results %}
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>ユーザー名</th>
+                        <th>メール</th>
+                        <th>プロフィール</th>
+                    </tr>
+                    {% for user in results %}
+                    <tr>
+                        <td>{{ user[0] }}</td>
+                        <td>{{ user[1] | safe }}</td>  <!-- ❌ XSS脆弱性 -->
+                        <td>{{ user[3] | safe }}</td>  <!-- ❌ XSS脆弱性 -->
+                        <td>{{ user[4] | safe }}</td>  <!-- ❌ XSS脆弱性 -->
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>該当するユーザーが見つかりませんでした。</p>
+            {% endif %}
+            
+            <!-- ❌ XSS脆弱性: URLパラメータも危険 -->
+            <p><a href="{{ url_for('search') }}?q={{ query }}">この検索結果を共有</a></p>
+        {% endif %}
+        
+        <div class="examples">
+            <h3>テスト用ペイロード例:</h3>
+            <ul>
+                <li><code>taro</code> - 正常な検索</li>
+                <li><code>' OR '1'='1</code> - SQLインジェクション</li>
+                <li><code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code> - XSS</li>
+                <li><code>'; DROP TABLE users; --</code> - 破壊的SQL</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
