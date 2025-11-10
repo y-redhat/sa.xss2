@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS脆弱性デモ</title>
+</head>
+<body>
+    <h1>XSS脆弱性学習用デモ</h1>
+    <p>安全にXSSを学ぶためのデモページ</p>
+
+    <div style="border: 2px solid red; padding: 15px; margin: 15px 0;">
+        <h2>脆弱な検索機能</h2>
+        <input type="text" id="searchInput" placeholder="検索キーワードを入力">
+        <button id="searchButton">検索</button>
+        <div id="result" style="margin-top: 10px;"></div>
+    </div>
+
+    <div style="border: 2px solid red; padding: 15px; margin: 15px 0;">
+        <h2>脆弱なコメント欄</h2>
+        <input type="text" id="commentInput" placeholder="コメントを入力">
+        <button id="commentButton">コメント投稿</button>
+        <div id="commentArea" style="margin-top: 10px;"></div>
+    </div>
+
+    <div style="background: #f0f0f0; padding: 15px; margin: 15px 0;">
+        <h3>テスト用XSSコード例:</h3>
+        <p><code>&lt;script&gt;alert('XSSテスト')&lt;/script&gt;</code></p>
+        <p><code>&lt;img src=x onerror="alert('画像エラー')"&gt;</code></p>
+        <p><code>&lt;button onclick="alert('クリック')"&gt;ボタン&lt;/button&gt;</code></p>
+    </div>
+
+    <!-- 外部JavaScriptファイルを読み込み -->
+    <script src="script.js"></script>
+</body>
+</html>
