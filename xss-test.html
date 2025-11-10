@@ -1,78 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>XSS脆弱性デモ - 安全版</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS脆弱性デモ（修正版）</title>
 </head>
 <body>
-    <h1>XSS脆弱性テスト（安全版）</h1>
-    <p>ページを開いた瞬間にリダイレクトされないように修正しました</p>
-    
+    <h1>🔓 XSS脆弱性デモ（安全版）</h1>
+    <p>ページを開いた瞬間に攻撃が実行されないように修正しました</p>
+
+    <!-- ユーザーデータ表示エリア -->
+    <div style="background: #e6f3ff; padding: 10px; margin: 10px 0;">
+        <h3>📊 現在のユーザーデータ:</h3>
+        <div id="userDisplay">
+            データがありません
+        </div>
+    </div>
+
+    <!-- 脆弱な入力フォーム -->
+    <div style="border: 2px solid red; padding: 15px; margin: 15px 0;">
+        <h2>❌ 脆弱なプロフィール登録</h2>
+        <input type="text" id="vulnName" placeholder="ユーザー名" value="山田太郎">
+        <textarea id="vulnBio" placeholder="自己紹介">通常のユーザーです</textarea>
+        <button onclick="saveVulnerableProfile()">プロフィール保存</button>
+    </div>
+
     <!-- 脆弱な検索機能 -->
-    <div>
-        <h2>脆弱な検索</h2>
-        <input type="text" id="searchInput" placeholder="検索キーワード">
+    <div style="border: 2px solid red; padding: 15px; margin: 15px 0;">
+        <h2>❌ 脆弱な検索機能</h2>
+        <input type="text" id="vulnSearch" placeholder="検索キーワード">
         <button onclick="vulnerableSearch()">検索</button>
-        <div id="searchResult"></div>
+        <div id="searchResults" style="margin-top: 10px;"></div>
     </div>
 
     <!-- 脆弱なコメント機能 -->
-    <div>
-        <h2>脆弱なコメント欄</h2>
-        <input type="text" id="commentInput" placeholder="コメントを入力">
-        <button onclick="addComment()">コメント投稿</button>
-        <div id="comments"></div>
+    <div style="border: 2px solid red; padding: 15px; margin: 15px 0;">
+        <h2>❌ 脆弱なコメント欄</h2>
+        <textarea id="vulnComment" placeholder="コメントを入力..."></textarea>
+        <button onclick="addVulnerableComment()">コメント投稿</button>
+        <div id="comments" style="margin-top: 10px;"></div>
     </div>
 
-    <!-- 脆弱なプロフィール表示 -->
-    <div>
-        <h2>脆弱なプロフィール</h2>
-        <input type="text" id="nameInput" placeholder="名前" value="ユーザー">
-        <input type="text" id="bioInput" placeholder="自己紹介" value="こんにちは">
-        <button onclick="showProfile()">プロフィール表示</button>
-        <div id="profile"></div>
+    <!-- 安全な入力フォーム -->
+    <div style="border: 2px solid green; padding: 15px; margin: 15px 0;">
+        <h2>✅ 安全なプロフィール登録</h2>
+        <input type="text" id="secureName" placeholder="ユーザー名" value="山田太郎">
+        <textarea id="secureBio" placeholder="自己紹介">通常のユーザーです</textarea>
+        <button onclick="saveSecureProfile()">プロフィール保存</button>
+    </div>
+
+    <!-- テスト用ペイロード -->
+    <div style="background: #f0f0f0; padding: 15px; margin: 15px 0;">
+        <h3>🧪 テスト用XSSペイロード:</h3>
+        <div>
+            <strong>基本XSS:</strong>
+            <code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code>
+            <button onclick="copyPayload(this)">コピー</button>
+        </div>
+        <div>
+            <strong>画像タグ悪用:</strong>
+            <code>&lt;img src=x onerror="alert('Hacked')"&gt;</code>
+            <button onclick="copyPayload(this)">コピー</button>
+        </div>
+        <div>
+            <strong>ボタン追加:</strong>
+            <code>&lt;button onclick="alert('Clicked')"&gt;クリック&lt;/button&gt;</code>
+            <button onclick="copyPayload(this)">コピー</button>
+        </div>
     </div>
 
     <script>
-        // ❌ 危険: XSS脆弱性あり（ただし安全な範囲で）
-        function vulnerableSearch() {
-            const query = document.getElementById('searchInput').value;
-            // 脆弱性: innerHTMLでそのまま表示
-            document.getElementById('searchResult').innerHTML = 
-                `検索結果: ${query}`;
-        }
+        // ユーザーデータ
+        let userData = {
+            name: "山田太郎",
+            bio: "通常のユーザーです",
+            balance: 10000,
+            isAdmin: false
+        };
 
-        // ❌ 危険: XSS脆弱性あり
-        function addComment() {
-            const comment = document.getElementById('commentInput').value;
-            const commentDiv = document.createElement('div');
-            // 脆弱性: innerHTMLでそのまま表示
-            commentDiv.innerHTML = `コメント: ${comment}`;
-            document.getElementById('comments').appendChild(commentDiv);
-        }
-
-        // ❌ 危険: XSS脆弱性あり
-        function showProfile() {
-            const name = document.getElementById('nameInput').value;
-            const bio = document.getElementById('bioInput').value;
-            // 脆弱性: innerHTMLでそのまま表示
-            document.getElementById('profile').innerHTML = `
-                <h3>${name}のプロフィール</h3>
-                <p>${bio}</p>
+        // 脆弱なプロフィール保存
+        function saveVulnerableProfile() {
+            const name = document.getElementById('vulnName').value;
+            const bio = document.getElementById('vulnBio').value;
+            
+            // ❌ 危険: innerHTMLでそのまま表示
+            document.getElementById('userDisplay').innerHTML = `
+                <strong>名前:</strong> ${name}<br>
+                <strong>自己紹介:</strong> ${bio}<br>
+                <strong>残高:</strong> ¥${userData.balance.toLocaleString()}<br>
+                <strong>管理者:</strong> ${userData.isAdmin ? 'はい' : 'いいえ'}
             `;
         }
+
+        // 脆弱な検索
+        function vulnerableSearch() {
+            const query = document.getElementById('vulnSearch').value;
+            
+            // ❌ 危険: ユーザー入力をそのままHTMLに挿入
+            document.getElementById('searchResults').innerHTML = `
+                <h4>「${query}」の検索結果:</h4>
+                <p>${query} に関する結果が見つかりました</p>
+            `;
+        }
+
+        // 脆弱なコメント追加
+        function addVulnerableComment() {
+            const comment = document.getElementById('vulnComment').value;
+            
+            // ❌ 危険: 動的にHTMLを構築
+            const commentDiv = document.createElement('div');
+            commentDiv.style.border = "1px solid #ccc";
+            commentDiv.style.padding = "10px";
+            commentDiv.style.margin = "5px 0";
+            commentDiv.innerHTML = `
+                <strong>匿名ユーザー:</strong>
+                <span>${comment}</span>
+                <br>
+                <small>${new Date().toLocaleString()}</small>
+            `;
+            
+            document.getElementById('comments').appendChild(commentDiv);
+            document.getElementById('vulnComment').value = '';
+        }
+
+        // 安全なプロフィール保存
+        function saveSecureProfile() {
+            const name = document.getElementById('secureName').value;
+            const bio = document.getElementById('secureBio').value;
+            
+            // ✅ 安全: textContentを使用
+            const display = document.getElementById('userDisplay');
+            display.innerHTML = '';
+            
+            const nameElem = document.createElement('div');
+            nameElem.innerHTML = '<strong>名前:</strong> ' + name;
+            
+            const bioElem = document.createElement('div');
+            bioElem.innerHTML = '<strong>自己紹介:</strong> ' + bio;
+            
+            const balanceElem = document.createElement('div');
+            balanceElem.innerHTML = '<strong>残高:</strong> ¥' + userData.balance.toLocaleString();
+            
+            const adminElem = document.createElement('div');
+            adminElem.innerHTML = '<strong>管理者:</strong> ' + (userData.isAdmin ? 'はい' : 'いいえ');
+            
+            display.appendChild(nameElem);
+            display.appendChild(bioElem);
+            display.appendChild(balanceElem);
+            display.appendChild(adminElem);
+        }
+
+        // ペイロードコピー機能
+        function copyPayload(button) {
+            const payload = button.previousElementSibling.textContent;
+            navigator.clipboard.writeText(payload).then(() => {
+                alert('ペイロードをコピーしました: ' + payload);
+            });
+        }
+
+        // 初期表示
+        saveSecureProfile();
     </script>
 
-    <div style="margin-top: 50px; background: #f0f0f0; padding: 10px;">
-        <h3>テスト用XSSペイロード（安全なもの）:</h3>
+    <div style="background: #fff3cd; padding: 15px; margin-top: 20px;">
+        <h3>📚 学習のポイント</h3>
         <ul>
-            <li><code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code></li>
-            <li><code>&lt;img src=x onerror="alert('Hacked')"&gt;</code></li>
-            <li><code>&lt;button onclick="alert('Clicked')"&gt;クリック&lt;/button&gt;</code></li>
-            <li><code>&lt;div style="background:red;color:white;"&gt;HACKED&lt;/div&gt;</code></li>
+            <li>XSSではユーザー入力がJavaScriptとして実行される</li>
+            <li>innerHTMLの代わりにtextContentを使うことで防御できる</li>
+            <li>常にユーザー入力を検証・エスケープする</li>
         </ul>
-        
         <p style="color: red; font-weight: bold;">
-            ⚠ 注意: ページをリダイレクトするコードは使用しないでください
+            ⚠ このページはローカル環境でのみ実行してください
         </p>
     </div>
 </body>
